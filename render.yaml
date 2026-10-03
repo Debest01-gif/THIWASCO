@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: thiwasco-water-mis
+    env: docker
+    plan: free
+    region: oregon
+    dockerfilePath: Dockerfile
+    envVars:
+      - key: APP_NAME
+        value: "THIWASCO MIS"
+      - key: DB_CONNECTION
+        value: "sqlite"
+      - key: APP_TIMEZONE
+        value: "Africa/Nairobi"
