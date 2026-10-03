@@ -8,10 +8,13 @@ require_once __DIR__ . '/config.php';
 // Start secure session
 if (session_status() === PHP_SESSION_NONE) {
     session_name(SESSION_NAME);
+    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (($_SERVER['SERVER_PORT'] ?? 80) == 443)
+        || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
     session_set_cookie_params([
         'lifetime' => SESSION_LIFETIME,
         'path'     => '/',
-        'secure'   => false, // Set true in production with HTTPS
+        'secure'   => $isHttps,
         'httponly' => true,
         'samesite' => 'Lax'
     ]);
@@ -45,11 +48,19 @@ class Auth {
 
         if (!$isPasswordValid) {
             $attempts = $user['login_attempts'] + 1;
-            $lockSQL = $attempts >= MAX_LOGIN_ATTEMPTS
-                ? ", locked_until = DATE_ADD(NOW(), INTERVAL " . LOCKOUT_MINUTES . " MINUTE), login_attempts = 0"
-                : ", login_attempts = {$attempts}";
-            db()->execute("UPDATE users SET login_attempts = {$attempts} {$lockSQL} WHERE user_id = ?", [$user['user_id']]);
             $remaining = MAX_LOGIN_ATTEMPTS - $attempts;
+            if ($attempts >= MAX_LOGIN_ATTEMPTS) {
+                $lockedUntil = date('Y-m-d H:i:s', time() + (LOCKOUT_MINUTES * 60));
+                db()->execute(
+                    "UPDATE users SET login_attempts = 0, locked_until = ? WHERE user_id = ?",
+                    [$lockedUntil, $user['user_id']]
+                );
+            } else {
+                db()->execute(
+                    "UPDATE users SET login_attempts = ? WHERE user_id = ?",
+                    [$attempts, $user['user_id']]
+                );
+            }
             if ($remaining > 0) {
                 return ['success' => false, 'message' => "Invalid password. {$remaining} attempts remaining."];
             }
@@ -57,9 +68,10 @@ class Auth {
         }
 
         // Reset attempts and update last login
+        $now = date('Y-m-d H:i:s');
         db()->execute(
-            "UPDATE users SET login_attempts = 0, locked_until = NULL, last_login = NOW() WHERE user_id = ?",
-            [$user['user_id']]
+            "UPDATE users SET login_attempts = 0, locked_until = NULL, last_login = ? WHERE user_id = ?",
+            [$now, $user['user_id']]
         );
 
         // Set session

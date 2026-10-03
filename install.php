@@ -5,11 +5,8 @@
  * Access: http://localhost/THIWASCO/install.php
  */
 
-// ─── Configuration ───────────────────────────────────────────────────────
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_NAME', 'thiwasco_db');
+// Load unified config (sets DB_* constants from environment)
+require_once __DIR__ . '/includes/config.php';
 
 $step = (int)($_GET['step'] ?? 0);
 $messages = [];

@@ -3,3 +3,19 @@ Thumbs.db
 *.log
 test_suite.php
 test_system.php
+.env
+.env.local
+*.bak
+
+# SQLite database (generated at runtime by Docker)
+database/thiwasco.sqlite
+database/thiwasco.sqlite-wal
+database/thiwasco.sqlite-shm
+
+# Uploaded files (generated at runtime)
+uploads/meter_photos/*
+uploads/inspection_photos/*
+uploads/profile_photos/*
+!uploads/meter_photos/.gitkeep
+!uploads/inspection_photos/.gitkeep
+!uploads/profile_photos/.gitkeep

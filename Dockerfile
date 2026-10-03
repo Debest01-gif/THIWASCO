@@ -22,10 +22,20 @@ WORKDIR /var/www/html
 # Copy application files
 COPY . /var/www/html/
 
+# Create required upload directories
+RUN mkdir -p /var/www/html/uploads/meter_photos \
+             /var/www/html/uploads/inspection_photos \
+             /var/www/html/uploads/profile_photos \
+    && echo "Options -Indexes" > /var/www/html/uploads/.htaccess
+
 # Set proper permissions for Apache user
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/uploads \
     && chmod -R 775 /var/www/html/database
+
+# Allow .htaccess overrides in web root
+RUN sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf \
+    && sed -i 's/AllowOverride none/AllowOverride All/g' /etc/apache2/apache2.conf
 
 # Add ServerName to avoid warning
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
@@ -34,6 +44,6 @@ RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-EXPOSE 80 10000
+EXPOSE 10000
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

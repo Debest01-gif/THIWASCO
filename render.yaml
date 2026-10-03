@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: thiwasco-water-mis
+    name: thiwasco-mis
     env: docker
     plan: free
     region: oregon
@@ -12,3 +12,5 @@ services:
         value: "sqlite"
       - key: APP_TIMEZONE
         value: "Africa/Nairobi"
+      - key: APP_URL
+        value: "https://thiwasco-1.onrender.com"

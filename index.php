@@ -26,8 +26,8 @@ try {
     $r = db()->fetch("SELECT COALESCE(SUM(total_payable),0) as total FROM invoices WHERE billing_month = ?", [$thisMonth]);
     $stats['billed_this_month'] = $r['total'] ?? 0;
 
-    // Total collected this month
-    $r = db()->fetch("SELECT COALESCE(SUM(amount),0) as total FROM payments WHERE DATE_FORMAT(payment_date,'%Y-%m') = ? AND is_reversed = 0", [$thisMonth]);
+    // Total collected this month (strftime works on both MySQL-compat and SQLite)
+    $r = db()->fetch("SELECT COALESCE(SUM(amount),0) as total FROM payments WHERE strftime('%Y-%m', payment_date) = ? AND is_reversed = 0", [$thisMonth]);
     $stats['collected_this_month'] = $r['total'] ?? 0;
 
     // Total outstanding arrears
@@ -45,13 +45,15 @@ try {
     $r = db()->fetch("SELECT COUNT(*) as cnt FROM field_inspections WHERE status = 'Open'");
     $stats['open_inspections'] = $r['cnt'] ?? 0;
 
-    // Revenue last 6 months (for chart)
+    // Revenue last 6 months (for chart) — SQLite-compatible
+    $sixMonthsAgo = date('Y-m-d', strtotime('-6 months'));
     $revenueChart = db()->fetchAll(
-        "SELECT DATE_FORMAT(payment_date,'%Y-%m') as month,
+        "SELECT strftime('%Y-%m', payment_date) as month,
                 COALESCE(SUM(amount),0) as collected
          FROM payments
-         WHERE is_reversed=0 AND payment_date >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
-         GROUP BY month ORDER BY month ASC"
+         WHERE is_reversed=0 AND payment_date >= ?
+         GROUP BY month ORDER BY month ASC",
+        [$sixMonthsAgo]
     );
 
     // NRW trend last 6 months
@@ -79,7 +81,7 @@ try {
                 pm.method_name
          FROM payments p
          JOIN customers c ON p.customer_id = c.customer_id
-         JOIN payment_methods pm ON p.payment_method_id = pm.method_id
+         LEFT JOIN payment_methods pm ON p.payment_method_id = pm.method_id
          WHERE p.is_reversed = 0
          ORDER BY p.created_at DESC LIMIT 8"
     );
