@@ -4,7 +4,9 @@
  */
 
 // Environment / Database Configuration
-$envDbConn = getenv('DB_CONNECTION') ?: ($_ENV['DB_CONNECTION'] ?? 'mysql');
+// Default to SQLite - works on Render/Docker without any configuration.
+// Set DB_CONNECTION=mysql or DB_CONNECTION=pgsql to use a remote database.
+$envDbConn = getenv('DB_CONNECTION') ?: ($_ENV['DB_CONNECTION'] ?? 'sqlite');
 $envDbHost = getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? 'localhost');
 $envDbPort = getenv('DB_PORT') ?: ($_ENV['DB_PORT'] ?? '3306');
 $envDbUser = getenv('DB_USER') ?: ($_ENV['DB_USER'] ?? 'root');
@@ -12,17 +14,19 @@ $envDbPass = getenv('DB_PASS') !== false ? getenv('DB_PASS') : ($_ENV['DB_PASS']
 $envDbName = getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? 'thiwasco_db');
 $envDbCharset = getenv('DB_CHARSET') ?: ($_ENV['DB_CHARSET'] ?? 'utf8mb4');
 
-// Parse DATABASE_URL if present (e.g. on Render/Heroku)
-$databaseUrl = getenv('DATABASE_URL') ?: ($_ENV['DATABASE_URL'] ?? '');
-if (!empty($databaseUrl)) {
-    $dbParts = parse_url($databaseUrl);
-    if ($dbParts) {
-        $envDbConn = ($dbParts['scheme'] === 'postgres' || $dbParts['scheme'] === 'postgresql') ? 'pgsql' : 'mysql';
-        $envDbHost = $dbParts['host'] ?? $envDbHost;
-        $envDbPort = $dbParts['port'] ?? ($envDbConn === 'pgsql' ? '5432' : '3306');
-        $envDbUser = $dbParts['user'] ?? $envDbUser;
-        $envDbPass = $dbParts['pass'] ?? $envDbPass;
-        $envDbName = ltrim($dbParts['path'] ?? '', '/') ?: $envDbName;
+// Parse DATABASE_URL only when explicitly using MySQL or PostgreSQL (not SQLite)
+if ($envDbConn !== 'sqlite') {
+    $databaseUrl = getenv('DATABASE_URL') ?: ($_ENV['DATABASE_URL'] ?? '');
+    if (!empty($databaseUrl)) {
+        $dbParts = parse_url($databaseUrl);
+        if ($dbParts) {
+            $envDbConn = ($dbParts['scheme'] === 'postgres' || $dbParts['scheme'] === 'postgresql') ? 'pgsql' : 'mysql';
+            $envDbHost = $dbParts['host'] ?? $envDbHost;
+            $envDbPort = $dbParts['port'] ?? ($envDbConn === 'pgsql' ? '5432' : '3306');
+            $envDbUser = $dbParts['user'] ?? $envDbUser;
+            $envDbPass = $dbParts['pass'] ?? $envDbPass;
+            $envDbName = ltrim($dbParts['path'] ?? '', '/') ?: $envDbName;
+        }
     }
 }
 
