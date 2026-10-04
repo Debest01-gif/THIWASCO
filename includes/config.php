@@ -133,9 +133,31 @@ class Database {
     }
 
     private function initSqlite($sqliteFile, $options) {
+        $dbDir = dirname($sqliteFile);
+        if (!is_dir($dbDir)) {
+            @mkdir($dbDir, 0777, true);
+        }
+        @chmod($dbDir, 0777);
+        if (file_exists($sqliteFile)) {
+            @chmod($sqliteFile, 0666);
+        }
+
         $this->driver = 'sqlite';
         $this->pdo = new PDO("sqlite:" . $sqliteFile, null, null, $options);
         $this->pdo->exec("PRAGMA foreign_keys = ON;");
+
+        // Verify if core tables exist, if not auto-initialize
+        try {
+            $tableCheck = $this->pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='users'")->fetch();
+            if (!$tableCheck) {
+                require_once __DIR__ . '/../database/init_sqlite.php';
+                if (function_exists('initSqliteDatabase')) {
+                    initSqliteDatabase($this->pdo);
+                }
+            }
+        } catch (Exception $e) {
+            // Ignore if check fails
+        }
 
         // Register custom SQL functions for MySQL syntax compatibility
         $this->pdo->sqliteCreateFunction('NOW', function() { return date('Y-m-d H:i:s'); });

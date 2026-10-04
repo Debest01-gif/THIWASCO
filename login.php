@@ -17,13 +17,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($username) || empty($password)) {
         $error = 'Please enter both username and password.';
     } else {
-        $result = Auth::login($username, $password);
-        if ($result['success']) {
-            $redirect = $_GET['redirect'] ?? (APP_URL . '/index.php');
-            header('Location: ' . $redirect);
-            exit;
-        } else {
-            $error = $result['message'];
+        try {
+            $result = Auth::login($username, $password);
+            if ($result['success']) {
+                $redirect = $_GET['redirect'] ?? (APP_URL . '/index.php');
+                header('Location: ' . $redirect);
+                exit;
+            } else {
+                $error = $result['message'];
+            }
+        } catch (Throwable $e) {
+            $error = 'Login error: ' . $e->getMessage();
         }
     }
 }
