@@ -145,6 +145,33 @@ class Database {
         $this->pdo->sqliteCreateFunction('GREATEST', function(...$args) { return count($args) ? max($args) : null; });
         $this->pdo->sqliteCreateFunction('LEAST', function(...$args) { return count($args) ? min($args) : null; });
         $this->pdo->sqliteCreateFunction('CONCAT', function(...$args) { return implode('', $args); });
+        $this->pdo->sqliteCreateFunction('DATE_FORMAT', function($date, $format) {
+            if (!$date) return null;
+            $ts = strtotime($date);
+            if ($ts === false) return null;
+            $phpFormat = str_replace(
+                ['%Y', '%y', '%m', '%c', '%d', '%e', '%H', '%h', '%i', '%s', '%M', '%b', '%W', '%a'],
+                ['Y',  'y',  'm',  'n',  'd',  'j',  'H',  'h',  'i',  's',  'F',  'M',  'l',  'D'],
+                $format
+            );
+            return date($phpFormat, $ts);
+        });
+        $this->pdo->sqliteCreateFunction('DATEDIFF', function($date1, $date2) {
+            if (!$date1 || !$date2) return null;
+            $t1 = strtotime($date1);
+            $t2 = strtotime($date2);
+            if ($t1 === false || $t2 === false) return null;
+            return (int)round(($t1 - $t2) / 86400);
+        });
+        $this->pdo->sqliteCreateFunction('YEAR', function($date) {
+            return $date ? date('Y', strtotime($date)) : null;
+        });
+        $this->pdo->sqliteCreateFunction('MONTH', function($date) {
+            return $date ? date('n', strtotime($date)) : null;
+        });
+        $this->pdo->sqliteCreateFunction('DAY', function($date) {
+            return $date ? date('j', strtotime($date)) : null;
+        });
     }
 
     public static function getInstance() {

@@ -12,5 +12,3 @@ services:
         value: "sqlite"
       - key: APP_TIMEZONE
         value: "Africa/Nairobi"
-      - key: APP_URL
-        value: "https://thiwasco-1.onrender.com"

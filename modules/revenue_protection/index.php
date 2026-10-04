@@ -60,11 +60,13 @@ try {
     );
 
     // Monthly trend (last 6 months)
+    $sixMonthsAgo = date('Y-m-d', strtotime('-6 months'));
     $monthlyTrend = db()->fetchAll(
         "SELECT DATE_FORMAT(inspection_date,'%Y-%m') as month, COUNT(*) as cases
          FROM field_inspections
-         WHERE inspection_date >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
-         GROUP BY month ORDER BY month"
+         WHERE inspection_date >= ?
+         GROUP BY month ORDER BY month",
+        [$sixMonthsAgo]
     );
 
     $zones = db()->fetchAll("SELECT zone_id, zone_name FROM zones WHERE is_active=1");

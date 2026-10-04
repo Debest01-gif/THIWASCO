@@ -57,14 +57,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         if ($invoicePenalty && $case['customer_id'] && !$case['penalty_invoiced'] && $penaltyAmount > 0) {
             $currentYM = date('Ym');
             $invRef = generateRef('INV', 'invoices', 'invoice_no');
+            $today = date('Y-m-d');
+            $dueDate = date('Y-m-d', strtotime('+14 days'));
             $pdo->prepare("INSERT INTO invoices 
                 (invoice_no, customer_id, meter_id, billing_month, invoice_date, due_date, penalties, total_bill, arrears_brought_forward, total_payable, status, generated_by)
-                VALUES (?, ?, ?, ?, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 14 DAY), ?, ?, ?, ?, 'Unpaid', ?)")
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Unpaid', ?)")
                 ->execute([
                     $invRef,
                     $case['customer_id'],
                     $case['meter_id'] ?: 1,
                     date('Y-m'),
+                    $today,
+                    $dueDate,
                     $penaltyAmount,
                     $penaltyAmount,
                     $case['balance'],
